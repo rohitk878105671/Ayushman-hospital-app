@@ -1,0 +1,44 @@
+
+name: Build Hospital Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ayushman_hospital_app_starter.zip'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Extract project
+        run: unzip -q ayushman_hospital_app_starter.zip -d build_source
+
+      - name: Build APK
+        working-directory: build_source/ayushman_hospital_app
+        run: |
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ayushman-Hospital-APK
+          path: build_source/ayushman_hospital_app/build/app/outputs/flutter-apk/app-release.apk
+          
