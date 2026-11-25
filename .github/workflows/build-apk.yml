@@ -1,4 +1,3 @@
-
 name: Build Hospital Android APK
 
 on:
@@ -30,15 +29,29 @@ jobs:
       - name: Extract project
         run: unzip -q ayushman_hospital_app_starter.zip -d build_source
 
+      - name: Locate Flutter project
+        id: locate
+        shell: bash
+        run: |
+          PROJECT_DIR="$(find "$GITHUB_WORKSPACE/build_source" -type f -name pubspec.yaml -printf '%h\n' | head -n 1)"
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Flutter pubspec.yaml not found"
+            exit 1
+          fi
+          echo "project_dir=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
+
       - name: Build APK
-        working-directory: build_source/ayushman_hospital_app
+        working-directory: ${{ steps.locate.outputs.project_dir }}
         run: |
           flutter pub get
+          if [ ! -f android/app/build.gradle ] && [ ! -f android/app/build.gradle.kts ]; then
+            flutter create --platforms=android .
+          fi
           flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Ayushman-Hospital-APK
-          path: build_source/ayushman_hospital_app/build/app/outputs/flutter-apk/app-release.apk
+          path: ${{ steps.locate.outputs.project_dir }}/build/app/outputs/flutter-apk/app-release.apk
           
